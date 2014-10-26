@@ -182,6 +182,37 @@ modfit&lt;-train(train$classe~.,method=&quot;rf&quot;,data=train,preProcess=&quo
 
 pred_pca&lt;-predict(modfit,test)
 confusionMatrix(test$classe,pred_pca)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 2205   10    9    5    3
+##          B   35 1448   24    1   10
+##          C    2   30 1325    8    3
+##          D    6    4   59 1208    9
+##          E    0   10   14   11 1407
+## 
+## Overall Statistics
+##                                         
+##                Accuracy : 0.968         
+##                  95% CI : (0.964, 0.972)
+##     No Information Rate : 0.287         
+##     P-Value [Acc &gt; NIR] : &lt; 2e-16       
+##                                         
+##                   Kappa : 0.959         
+##  Mcnemar's Test P-Value : 4.36e-11      
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity             0.981    0.964    0.926    0.980    0.983
+## Specificity             0.995    0.989    0.993    0.988    0.995
+## Pos Pred Value          0.988    0.954    0.969    0.939    0.976
+## Neg Pred Value          0.992    0.991    0.984    0.996    0.996
+## Prevalence              0.287    0.191    0.182    0.157    0.183
+## Detection Rate          0.281    0.185    0.169    0.154    0.179
+## Detection Prevalence    0.284    0.193    0.174    0.164    0.184
+## Balanced Accuracy       0.988    0.977    0.960    0.984    0.989</code></pre>
 <p>Model 2 has a high error rate with accuracy of of &lt; 50%. Again this does not fit the training data or the test data.</p>
 </div>
 <div id="model-3" class="section level4">
@@ -242,7 +273,7 @@ confusionMatrix(test$classe,pred_rf)</code></pre>
 </div>
 <div id="model-4" class="section level4">
 <h4>Model 4</h4>
-<p>Let’s see if the randomForest model the model can be compressed further by using Principal component analysis (PCA),</p>
+<p>Let’s see if the randomForest model can be compressed further by using Principal component analysis (PCA),</p>
 <pre class="r"><code>set.seed(33833)
 prep&lt;-preProcess(train[,-51],method='pca',pcaComp=35)
 trainPC&lt;-predict(prep,train[,-51])
