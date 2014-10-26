@@ -1,0 +1,132 @@
+---
+title: "Practical Machine Learning Project"
+output: html_document
+---
+#### by Chethan T
+
+### Introduction
+
+The goal of this project is to choose and train a model to accurately predict the outcome variable "classe"  in the dataset provided by the Machine learning team. The training data is available in pml-training.csv file and the test data whose outcome has to be predicted is available in pml-testing.csv file.
+
+### Exploratory Analysis and Data Cleansing
+
+After reading the data, evaluate the variable values and remove those that do not contribute anything to the outcome.
+
+
+```{r, echo=TRUE,eval=TRUE}
+library(randomForest)
+library(caret)
+library(kernlab)
+
+
+setwd("~/1ML/1John Hopkins/Practical Machine Learning/Exercises")
+dat<-read.csv("pml-training.csv",stringsAsFactors=FALSE)
+testing_data<-read.csv("pml-testing.csv",stringsAsFactors=FALSE)
+
+
+set.seed(300)
+# Evaluate variables
+# names(dat)
+# Remove those that do not provide any value such as timestamp,user names
+
+dat_train<-dat[,10:160]
+
+# Now replace "Div/0" with NA and convert all non-numeric inputs to numeric
+
+dat_clean<-as.data.frame(lapply(dat_train[,1:150],function(x) if (is.character(x)) as.numeric(gsub("#DIV/0!",NA,x)) else x))
+
+a<-cbind(dat_clean,classe=dat_train[,151])
+
+# Keep only those variables that have few NAs (less than 1000 NAs out of 11K+ rows) in them.
+# This reduces number of inputs to 50 variables
+b<-a[,colSums(is.na(a))<1000]
+dim(b)
+```
+
+### Model building 
+
+#### Model 1
+
+For cross validation, do a 60/40 split of the training data. Use the 60% set for training and 40% set for validation.
+
+In Model 1, use tree classification to train a model using Caret train function.
+
+```{r,echo=TRUE,eval=TRUE}
+
+# 60/40 split for training and testing
+
+intrain<-createDataPartition(y=b$classe,p=0.6,list=FALSE)
+train<-b[intrain,]
+test<-b[-intrain,]
+
+# Tree classification model
+
+set.seed(33833)
+modtree <- train(classe ~ ., data = train, method = "rpart")
+modtree
+pred_tree<-predict(modtree,test)
+confusionMatrix(test$classe,pred_tree)
+
+```
+Model 1 above  has an accuracy of  49% and an error rate of 51%. This model doesn't fit the training data or the test data.
+
+#### Model 2
+In model 2, build randomforest using the caret:train function with repeadtedcv cross-validation setting
+and preprocess using "pca" to reduce number of components.
+```{r,echo=TRUE,eval=FALSE}
+set.seed(33833)
+ctrl_rf <- trainControl( method = "repeatedcv", number = 10, repeats = 10)
+grid_rf <- expand.grid(.mtry = 8)
+
+modfit<-train(train$classe~.,method="rf",data=train,preProcess="pca", trControl=ctrl_rf,tuneGrid=grid_rf)
+
+pred_pca<-predict(modfit,test)
+confusionMatrix(test$classe,pred_pca)
+
+```
+Model 2 has a high error rate with accuracy of of < 50%. Again this does not fit the training data or the test data.
+
+
+#### Model 3
+
+In Model 3, use randomForest function directly to train the model with 800 trees.
+
+```{r,echo=TRUE,eval=TRUE}
+set.seed(33833)
+m_rf<-randomForest(classe~.,data=train,ntree=800,mtry=10,importance=TRUE)
+m_rf
+
+pred_rf<-predict(m_rf,test)
+confusionMatrix(test$classe,pred_rf)
+
+```
+Model 3 has a very low Out of bag error rate and the out of sample error rate is < 1%. With 99.5% accuracy, this seems to have the best fit to the training and test data so far.
+
+#### Model 4
+
+Let's see if the randomForest model the model can be compressed further by using Principal component analysis (PCA), 
+
+```{r,echo=TRUE,eval=TRUE}
+set.seed(33833)
+prep<-preProcess(train[,-51],method='pca',pcaComp=35)
+trainPC<-predict(prep,train[,-51])
+m_rf_pca<-randomForest(train$classe~.,data=trainPC,ntree=800,mtry=10,p=0.5,importance=TRUE)
+
+prep<-preProcess(test[,-51],method='pca',pcaComp=35)
+testPC<-predict(prep,test[,-51])
+
+pred_rf_pca<-predict(m_rf_pca,testPC)
+confusionMatrix(test$classe,pred_rf_pca)
+```
+
+Model 4 has a very bad accuracy rate, so pca has not helped at all.
+
+### Conclusion
+
+Since Model 3 (randomForest) has the best accuracy and the least error rate, we use this to predict the outcome of the test data set provided by the Machine Learning team.
+
+```{r,echo=TRUE,eval=TRUE}
+pred_test<-predict(m_rf,testing_data)
+pred_test
+```
+
