@@ -73,7 +73,8 @@ Model 1 above  has an accuracy of  49% and an error rate of 51%. This model does
 #### Model 2
 In model 2, build randomforest using the caret:train function with repeadtedcv cross-validation setting
 and preprocess using "pca" to reduce number of components.
-```{r,echo=TRUE,eval=FALSE}
+
+```{r,echo=TRUE,eval=TRUE}
 set.seed(33833)
 ctrl_rf <- trainControl( method = "repeatedcv", number = 10, repeats = 10)
 grid_rf <- expand.grid(.mtry = 8)
@@ -84,7 +85,7 @@ pred_pca<-predict(modfit,test)
 confusionMatrix(test$classe,pred_pca)
 
 ```
-Model 2 has a high error rate with accuracy of of < 50%. Again this does not fit the training data or the test data.
+Model 2 has a high accuracy rate of 97%. Let's see if we can do better.
 
 
 #### Model 3
@@ -104,7 +105,7 @@ Model 3 has a very low Out of bag error rate and the out of sample error rate is
 
 #### Model 4
 
-Let's see if the randomForest model the model can be compressed further by using Principal component analysis (PCA), 
+Let's see if the randomForest model can be compressed further by using Principal component analysis (PCA), 
 
 ```{r,echo=TRUE,eval=TRUE}
 set.seed(33833)
